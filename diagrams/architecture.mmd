@@ -1,0 +1,28 @@
+flowchart TD
+    U[User profile<br/>genre, mood, target energy,<br/>acoustic preference]
+    D[(songs.csv)]
+    L[Song loader]
+    A[Recommendation Quality Agent<br/>plan the checks]
+    S[Scoring engine<br/>score each song with reasons]
+    R[Ranking engine<br/>sort top k songs]
+    C[Quality checker<br/>check score strength, artist repeats,<br/>and recommendation variety]
+    Q{Results pass checks?}
+    F[Keep ranked list<br/>add confidence note]
+    X[Adjust results<br/>apply diversity or low-confidence rule]
+    O[Recommendations<br/>titles, scores, reasons, and agent log]
+    T[Automated tests]
+    H[Human review]
+
+    D --> L
+    U --> A
+    L --> S
+    A --> S
+    S --> R
+    R --> C
+    C --> Q
+    Q -->|Yes| F
+    Q -->|No| X
+    X --> O
+    F --> O
+    T -. checks scoring and agent rules .-> C
+    H -. reviews logs and final list .-> O

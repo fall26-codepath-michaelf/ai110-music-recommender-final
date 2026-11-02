@@ -9,7 +9,8 @@ You will implement the functions in recommender.py:
 - recommend_songs
 """
 
-from .recommender import load_songs, recommend_songs
+from .quality_agent import RecommendationQualityAgent
+from .recommender import load_songs
 
 
 def main() -> None:
@@ -24,16 +25,19 @@ def main() -> None:
         "likes_acoustic": True,
     }
 
-    recommendations = recommend_songs(user_prefs, songs, k=5)
+    agent = RecommendationQualityAgent(songs)
+    result = agent.recommend(user_prefs, k=5)
 
+    print(f"\nRecommendation Quality Agent confidence: {result.confidence.upper()}")
     print("\nTop recommendations:\n")
-    for rec in recommendations:
-        # You decide the structure of each returned item.
-        # A common pattern is: (song, score, explanation)
-        song, score, explanation = rec
+    for song, score, explanation in result.recommendations:
         print(f"{song['title']} - Score: {score:.2f}")
         print(f"Because: {explanation}")
         print()
+
+    print("Agent log:")
+    for log in result.logs:
+        print(f"- {log}")
 
 
 if __name__ == "__main__":

@@ -1,165 +1,129 @@
-# 🎵 Music Recommender Simulation
+# FocusFlow: Music Recommendation Quality Agent
 
-## Project Summary
+## Original Project
 
-In this project you will build and explain a small music recommender system.
+This final project builds on the AI110 Module 3 Music Recommender Simulation.
+The original project loaded a small song catalog, compared songs with a user
+profile, and ranked the best matches. It showed how genre, mood, energy, and
+acousticness can become a simple recommendation score.
 
-Your goal is to:
+## Final Project Summary
 
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
+FocusFlow adds a Recommendation Quality Agent to the original recommender. The
+agent ranks songs, checks the list for repeated artists and limited variety,
+then either keeps the results or makes a small adjustment. It also gives a
+confidence label and a log so a user can see what the system checked.
 
-This version uses a content-based scoring rule to recommend songs that match a
-user's favorite genre, mood, energy level, and acoustic preference. I expanded
-the catalog from 10 to 17 songs so it includes more than the starter set of
-genres and moods. The recommender scores every song, then ranks the
-highest-scoring songs first.
+## Architecture Overview
 
----
+The system starts with a user profile and the song catalog. The scoring engine
+assigns points to every song, then the ranking engine selects the strongest
+matches. The Recommendation Quality Agent checks the ranked list before it is
+shown to the user. Automated tests check the scoring and quality rules, while
+people can read the log and decide whether the final list makes sense.
 
-## How The System Works
+See the full Mermaid source in [diagrams/architecture.mmd](diagrams/architecture.mmd).
 
-Each `Song` stores its title, artist, genre, mood, energy, tempo, valence,
-danceability, and acousticness. I will use genre, mood, energy, and
-acousticness for the first version of the score. A `UserProfile` stores a
-favorite genre, a favorite mood, a target energy level, and whether the user
-likes acoustic music.
+## Setup and Running the Project
 
-My starting profile is:
+1. Open a terminal in this project folder.
+2. Create and activate a virtual environment:
 
-```python
-{
-    "favorite_genre": "lofi",
-    "favorite_mood": "focused",
-    "target_energy": 0.45,
-    "likes_acoustic": True,
-}
-```
+   ```powershell
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   ```
 
-The scoring rule evaluates one song at a time:
+3. Install dependencies:
 
-- Matching genre: +4 points
-- Matching mood: +3 points
-- Energy closeness: up to +3 points, with closer energy values earning more
-- Matching acoustic preference: +1 point
+   ```powershell
+   python -m pip install -r requirements.txt
+   ```
 
-Genre receives the most weight because it is the clearest starting signal for
-this profile. Mood and energy then help separate a focused lofi song from an
-intense rock song. The ranking rule sorts every scored song from highest to
-lowest score and returns the top results.
+4. Run the recommender:
+
+   ```powershell
+   python -m src.main
+   ```
+
+5. Run the tests:
+
+   ```powershell
+   python -m pytest -q
+   ```
+
+## Sample Interactions
+
+### Default Focused Lofi Profile
 
 ```text
-User preferences
-      ↓
-Score each song in songs.csv
-      ↓
-Sort scores from highest to lowest
-      ↓
-Return the top k recommendations with reasons
-```
-
-This is a small simulation, not a full Spotify-style system. A larger system
-could also use behavior such as listens, skips, saves, and playlists. My rule
-may over-prioritize the favorite genre and miss songs from other genres that
-still fit the user's mood or energy.
-
----
-
-## Getting Started
-
-### Setup
-
-1. Create a virtual environment (optional but recommended):
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
-
-2. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-3. Run the app:
-
-```bash
-python -m src.main
-```
-
-### Running Tests
-
-Run the starter tests with:
-
-```bash
-pytest
-```
-
-You can add more tests in `tests/test_recommender.py`.
-
----
-
-## Sample Recommendation Output
-
-Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
-
-```
-Loaded songs: 17
-
-Top recommendations:
+Recommendation Quality Agent confidence: HIGH
 
 Focus Flow - Score: 10.85
-Because: genre match (+4.0); mood match (+3.0); energy close to target (+2.85); acoustic preference match (+1.0)
-
-Midnight Coding - Score: 7.91
-Because: genre match (+4.0); energy close to target (+2.91); acoustic preference match (+1.0)
-
 Library Rain - Score: 7.70
-Because: genre match (+4.0); energy close to target (+2.70); acoustic preference match (+1.0)
+Old Photograph - Score: 3.97
+
+Agent log:
+- PLAN: Set score, artist-repeat, and variety checks.
+- ACT: Ranked 15 candidate songs.
+- CHECK: Removed repeated artist recommendations: LoRoom, Neon Echo.
+- REFLECT: High confidence because the top score (10.85) meets the 6.0 threshold.
 ```
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->
+### High-Energy Pop Profile
 
----
+```text
+High-Energy Pop | confidence: high
+Sunrise City (10.82)
+Gym Hero (7.85)
+Rooftop Lights (6.64)
+```
 
-## Experiments You Tried
+### Deep Intense Rock Profile
 
-- I tested the default lofi, focused profile. `Focus Flow` ranked first because
-  it matched the genre and mood while staying close to the target energy.
-- I also tested a pop, happy profile with target energy 0.8. `Sunrise City`
-  ranked first, followed by `Gym Hero` and `Rooftop Lights`, which matched my
-  expectation for that profile.
+```text
+Deep Intense Rock | confidence: high
+Storm Runner (10.97)
+Gym Hero (6.91)
+Voltage Rush (3.94)
+```
 
----
+## Design Decisions and Tradeoffs
 
-## Limitations and Risks
+I kept the agent rule-based so its decisions are easy to test and explain. The
+agent removes repeated artists when other songs are available, checks whether
+the first three results have genre variety, and marks a result as low confidence
+when the top score is below 6.0. A rule-based agent is easier to understand
+than an LLM-based one, but it cannot understand a listener's full context or
+make subtle music judgments.
 
-This recommender only works with 17 songs and a few hand-written labels. It
-does not use lyrics, listening history, skips, or feedback from other users.
-Genre has the largest weight, so the system can overlook a song from another
-genre that fits the user's energy and mood.
+The variety rule only replaces a top-three song when a different-genre option
+has a score within 2 points. This keeps the agent from adding variety at the
+cost of an obviously worse recommendation. The tradeoff is that the list may
+still be narrow when no close alternative exists.
 
----
+## Testing
+
+The project has six automated tests. They cover the original ranking behavior,
+explanation output, repeated-artist removal, low-confidence results, a normal
+result that needs no adjustment, and an empty catalog. The agent also keeps a
+plain-text log of its plan, checks, and confidence decision.
+
+| Test input | Evaluation criteria | Result |
+| --- | --- | --- |
+| Focused lofi profile | Top score reaches the confidence threshold and the log explains the decision. | Pass: `Focus Flow` scored 10.85 with high confidence. |
+| Repeated-artist catalog | Final recommendations do not repeat an artist when alternatives exist. | Pass: the agent removes duplicate artists. |
+| Weak-match profile | A top score below 6.0 is marked low confidence. | Pass: the agent records a low-confidence message. |
+| Already varied results | The agent does not adjust a list that already has genre variety. | Pass: the original ranking stays in place. |
+| Empty catalog | The agent returns an empty list instead of crashing. | Pass: it returns low confidence and logs that there are not enough recommendations. |
 
 ## Reflection
 
-Read and complete `model_card.md`:
+The main thing I learned is that a ranked list is not automatically a good
+recommendation. The quality agent made the system check its own output instead
+of treating the first score order as the final answer. AI tools helped me think
+through the scoring and testing steps, but I still had to inspect the logs and
+compare the results with the user profile.
 
-[**Model Card**](model_card.md)
-
-Building this version helped me see that a recommender starts with choices about
-what counts as a useful signal. I used genre, mood, energy, and acousticness,
-then turned those choices into points. The ranking was easy to read because
-each score came with reasons, but I can also see how changing one weight can
-shift the whole list.
-
-I also learned that a simple system can be biased by its own design. My
-favorite-genre weight is strong, so it keeps the recommendations close to what
-the profile already likes. A larger system would need more data and a way to
-make room for discovery instead of only repeating the same type of music.
-
-
-
+More detail about the base recommender, its data, and its limits is in the
+[model card](model_card.md).
