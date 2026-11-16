@@ -40,13 +40,23 @@ See the full Mermaid source in [diagrams/architecture.mmd](diagrams/architecture
    python -m pip install -r requirements.txt
    ```
 
-4. Run the recommender:
+4. Start the local FocusFlow demo:
+
+   ```powershell
+   python -m src.server
+   ```
+
+   Then open <http://127.0.0.1:8501>. The demo runs the quality agent and
+   searches Spotify's catalog without exposing your local credentials to the
+   browser.
+
+5. Run the command-line recommender:
 
    ```powershell
    python -m src.main
    ```
 
-5. Run the tests:
+6. Run the tests:
 
    ```powershell
    python -m pytest -q
