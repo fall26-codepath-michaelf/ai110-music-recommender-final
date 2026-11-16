@@ -1,8 +1,7 @@
 // Runtime settings for the FocusFlow web UI.
-// useMock: true runs everything in the browser with fake Spotify data.
-// Set it to false once the backend described in web/README.md is running.
+// The local Python server provides the FocusFlow agent and real Spotify search.
 window.FOCUSFLOW_CONFIG = {
-  useMock: true,
+  useMock: false,
   apiBase: "/api",
   catalogCsvUrl: "../data/songs.csv",
 };

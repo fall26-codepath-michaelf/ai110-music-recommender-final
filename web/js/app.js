@@ -96,6 +96,7 @@
       genre: result.catalog_song ? result.catalog_song.genre : null,
       artUrl: result.album_art_url,
       durationMs: result.duration_ms,
+      externalUrl: result.external_url,
     };
   }
 
@@ -402,7 +403,7 @@
         found + " of " + recs.length + " found on Spotify." + (found ? " Want them as a playlist?" : ""),
       ]));
     }
-    $("playlist-btn").hidden = found === 0;
+    $("playlist-btn").hidden = !api.isMock || found === 0;
   }
 
   async function savePlaylist() {
@@ -501,13 +502,19 @@
         ]),
         badge,
         el("span", { class: "result__time", text: fmtTime(result.duration_ms) }),
-        el("button", {
-          type: "button", class: "icon-btn" + (isPlaying(track) ? " icon-btn--accent" : ""),
-          "aria-label": (isPlaying(track) ? "Pause " : "Play ") + result.title,
-          "data-focus-key": "result-play:" + result.uri,
-          html: isPlaying(track) ? ICONS.pause : ICONS.play,
-          onClick: () => toggleResultPlayback(i),
-        }),
+        api.isMock
+          ? el("button", {
+              type: "button", class: "icon-btn" + (isPlaying(track) ? " icon-btn--accent" : ""),
+              "aria-label": (isPlaying(track) ? "Pause " : "Play ") + result.title,
+              "data-focus-key": "result-play:" + result.uri,
+              html: isPlaying(track) ? ICONS.pause : ICONS.play,
+              onClick: () => toggleResultPlayback(i),
+            })
+          : el("a", {
+              class: "btn btn--outline", href: result.external_url || "#", target: "_blank",
+              rel: "noopener noreferrer", text: "Open Spotify",
+              "aria-label": "Open " + result.title + " in Spotify",
+            }),
       ]));
     });
   }
@@ -539,6 +546,17 @@
         el("div", { class: "row__sub", text: result.artist + " · " + fmtTime(result.duration_ms) }),
       ]),
     ]));
+
+    if (!api.isMock && !result.catalog_song) {
+      panel.appendChild(el("p", { text: "This demo searches Spotify and shows FocusFlow recommendations. Tagging new songs is not included." }));
+      if (result.external_url) {
+        panel.appendChild(el("a", {
+          class: "btn btn--accent btn--block", href: result.external_url, target: "_blank",
+          rel: "noopener noreferrer", text: "Open in Spotify",
+        }));
+      }
+      return;
+    }
 
     if (result.catalog_song) {
       const song = result.catalog_song;
@@ -732,10 +750,10 @@
   function renderStatus(status) {
     const connected = !!(status && status.connected);
     $("spotify-dot").classList.toggle("status-dot--on", connected);
-    $("spotify-status").textContent = connected ? "Spotify connected" : "Spotify not connected";
+    $("spotify-status").textContent = connected ? "Spotify search ready" : "Spotify not connected";
     const name = connected && status.user ? status.user.display_name || "" : "";
     $("avatar").textContent = name ? name[0].toUpperCase() : "?";
-    $("player-device").textContent = api.isMock ? "Demo mode · no audio" : "Playing on this browser";
+    $("player-device").textContent = api.isMock ? "Demo mode · no audio" : "Spotify playback is not part of this demo";
   }
 
   function bindEvents() {
@@ -783,6 +801,7 @@
     for (let n = 3; n <= 8; n++) {
       countSelect.appendChild(el("option", { value: String(n), text: String(n), selected: n === state.count }));
     }
+    document.querySelector(".player").hidden = !api.isMock;
     bindEvents();
     renderPlayerBar();
     renderPicks();
